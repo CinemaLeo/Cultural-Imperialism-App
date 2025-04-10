@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter&family=Noto+Sans&display=swap');
+
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/****************************************************/
+/*                  FONTS                           */
+/****************************************************/
+
+.Noto { font-family: 'Noto', sans-serif; }
+
+/****************************************************/
+/*                  ANIMATION                       */
+/****************************************************/
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(0px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeAndShrink {
+  0% {
+    opacity: 1.1;
+    transform: scale(1);
+  }
+  10%{
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+  20% {
+    opacity: 0.4;
+    transform: scale(0.55);
+    color: #444;
+  }
+  60%{
+    opacity: 0.2;
+    transform: scale(0.3);
+    color: #222;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.0);
+    color: #000
+  }
+}
+
+@keyframes fadeShadow {
+  0%{
+    textShadow: 5px 5px 5px rgba(0, 0, 0, 0.8);
+  }
+  100%{
+    textShadow: 5px 5px 5px rgba(0, 0, 0, 0);
+  }
+}
+
