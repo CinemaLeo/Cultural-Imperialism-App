@@ -84,14 +84,13 @@ function TranslationComponent() {
           }
           // Pipe data to translation context
           const newTranslation = {
+            index: data.index,
             input_text: data.translation.input_text,
             output_language: data.translation.target_language_name,
             output_translation: data.translation.translated_text,
             back_translation: data.translation.back_translation,
           };
           addTranslation(newTranslation);
-          // Optionally also update internal state if needed
-          setTranslations((prev) => [...prev, data.translation]);
           break;
 
         case "translation_failed":
@@ -213,51 +212,69 @@ function TranslationComponent() {
   return (
     <div>
       {/* Connection status indicator */}
-      <div style={{ marginBottom: "10px", fontSize: "0.8rem" }}>
-        WebSocket:{" "}
-        <span style={{ color: connected ? "green" : "red" }}>{status}</span>
-        {!connected && (
-          <button
-            onClick={() => connectWebSocket(clientId)}
+      <div
+        style={{
+          alignItems: "left",
+          marginBottom: "10px",
+          fontSize: "0.8rem",
+          color: connected ? "green" : "red",
+        }}
+      >
+        ⬤
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "90vh",
+        }}
+      >
+        <textarea
+          autoFocus
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)} // TODO If not conncted, try to connect.
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // Prevents newline
+              handleTranslate(); // Trigger your function
+            }
+          }}
+          placeholder=""
+          maxLength={150}
+          style={{
+            width: "100%",
+            minHeight: "50vh",
+            padding: "8px",
+            marginBottom: "10px",
+            outline: "none",
+            resize: "none",
+
+            backgroundColor: "rgba(255, 255, 255, 0)",
+            border: "0px",
+
+            textAlign: "center",
+            fontFamily: "'Noto', sans-serif",
+            fontSize: "3em",
+            caretColor: "yellow",
+            textShadow: "10px 10 black",
+          }}
+        />
+        {inputText.length > 2 && (
+          <div
             style={{
-              marginLeft: "10px",
-              padding: "2px 5px",
-              fontSize: "0.8rem",
+              display: "absolute",
+              position: "absolute",
+              top: "60vh",
+              alignContent: "center",
+              fontFamily: "'Noto', sans-serif",
+              fontSize: "3em",
+              color: "rgba(255, 255, 255, 0.25)",
             }}
           >
-            Reconnect
-          </button>
+            ⏎
+          </div>
         )}
-      </div>
-
-      <textarea
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        placeholder="Enter text to translate"
-        style={{
-          width: "100%",
-          minHeight: "100px",
-          padding: "8px",
-          marginBottom: "10px",
-        }}
-      />
-
-      <div>
-        <button
-          onClick={handleTranslate}
-          disabled={loading}
-          style={{ marginRight: "10px", padding: "8px 16px" }}
-        >
-          {loading ? "Translating..." : "Translate (WebSocket)"}
-        </button>
-
-        <button
-          onClick={handleTranslateREST}
-          disabled={loading}
-          style={{ padding: "8px 16px" }}
-        >
-          {loading ? "Translating..." : "Translate (REST Fallback)"}
-        </button>
       </div>
 
       {/* Error message */}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { useTranslationContext } from "./translationContext";
 import { useEffect } from "react";
+import Typewriter from "typewriter-effect";
 
 const number_of_translations = 56;
 
@@ -62,7 +63,14 @@ const Grid = () => {
                   marginBottom: "0.5em",
                 }}
               >
-                {cell.output_translation}
+                <Typewriter
+                  options={{
+                    strings: cell.output_translation,
+                    autoStart: true,
+                    loop: false,
+                    cursor: "",
+                  }}
+                />
               </div>
               <div
                 style={{

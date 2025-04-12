@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState } from "react";
 
 type Translation = {
+  index: number;
   input_text: string;
   output_language: string;
   output_translation: string;

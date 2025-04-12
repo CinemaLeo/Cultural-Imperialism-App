@@ -1,8 +1,10 @@
 from googletrans import Translator, LANGUAGES, LANGCODES
 import random
-import asyncio
+import asyncio 
 import time
 import json
+
+from asyncio import to_thread
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -82,7 +84,7 @@ async def detect_language(text):
 
 
 # Translate 
-async def translate_text(text, source_language, target_language, max_retries=2):
+def translate_text(text, source_language, target_language, max_retries=2):
     retries = 0
     length_variation_factor = 10
     delay_s = 1.5
@@ -105,14 +107,14 @@ async def translate_text(text, source_language, target_language, max_retries=2):
 
         retries += 1
         print(f"RETRY TRANSLATION: {source_language} {LANGUAGES[source_language]} -> {target_language} {LANGUAGES[target_language]}: Attempt {retries}")
-        await asyncio.sleep(delay_s)  # Small delay to avoid hitting the rate limit
+        time.sleep(delay_s)
 
     # Fail and fallback to original
     print(f"{target_language}: {LANGUAGES[target_language]}: Failed after {max_retries} retries")
     return text, False
 
 
-async def translate_to_original(text, source_language, original_language):
+def translate_to_original(text, source_language, original_language):
     translation = translator.translate(text, dest=original_language, src=source_language)
     return translation.text
 
@@ -218,12 +220,12 @@ async def process_translation(client_id: str, input_text: str):
         
         iterated_language = LANGUAGES[lang_code]  # store new language
         uniterated_text = str(iterated_text)
-        output_translation, success = await translate_text(iterated_text, original_language, lang_code)
+        output_translation, success = await to_thread(translate_text, iterated_text, original_language, lang_code)
         iterated_text = output_translation
 
         if success:
             successful_translations += 1
-            back_translation = await translate_to_original(iterated_text, lang_code, original_language)
+            back_translation = await to_thread(translate_to_original, iterated_text, lang_code, original_language)
             print(f"{LANGUAGES[original_language]} ({original_language}) to {lang_name} ({lang_code}): {uniterated_text} ==TRANS== {iterated_text} --MEANING--> {back_translation}")
             
             translation_data = {

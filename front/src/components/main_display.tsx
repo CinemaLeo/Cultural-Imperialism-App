@@ -7,7 +7,10 @@ export default function MainDisplay() {
     <div style={styles.container}>
       {translations.map((translation, i) => (
         <div key={i} style={styles.entry}>
-          <div style={styles.language}>{translation.output_language}</div>
+          <div style={styles.language}>
+            {translation.index}
+            {translation.output_language}
+          </div>
           <div style={styles.translation}>{translation.output_translation}</div>
           <div style={styles.backTranslation}>
             {translation.back_translation}
@@ -27,7 +30,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fdfdfd",
+    backgroundColor: "#rgba(0, 0, 0, 0)",
   },
   entry: {
     position: "absolute" as const,

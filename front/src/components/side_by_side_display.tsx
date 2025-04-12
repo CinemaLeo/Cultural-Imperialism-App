@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslationContext } from "./translationContext";
+import Typewriter from "typewriter-effect";
 
 // A simple 2-column layout
 const SideBySideDisplay = () => {
@@ -27,7 +28,26 @@ const SideBySideDisplay = () => {
       <div style={styles.column}>
         <div style={styles.language}>{originalTranslation.output_language}</div>
         <div style={styles.translation}>
-          {originalTranslation.output_translation}
+          <Typewriter
+            options={{
+              strings: originalTranslation.output_translation,
+              autoStart: true,
+              loop: false,
+            }}
+            onInit={(typewriter) => {
+              typewriter
+                .pauseFor(originalTranslation.output_translation.length * 2) // Optional pause after typing
+                .callFunction(() => {
+                  // Remove or hide the cursor after typing is done
+                  const cursors =
+                    document.getElementsByClassName("Typewriter__cursor");
+                  for (let i = 0; i < cursors.length; i++) {
+                    cursors[i].remove(); // or use style.display = 'none' to hide instead of removing
+                  }
+                })
+                .start();
+            }}
+          />
         </div>
         <div style={styles.backTranslation}>
           {originalTranslation.back_translation}
@@ -36,7 +56,13 @@ const SideBySideDisplay = () => {
       <div style={styles.column}>
         <div style={styles.language}>{currentTranslation.output_language}</div>
         <div style={styles.translation}>
-          {currentTranslation.output_translation}
+          <Typewriter
+            options={{
+              strings: currentTranslation.output_translation,
+              autoStart: true,
+              loop: false,
+            }}
+          />
         </div>
         <div style={styles.backTranslation}>
           {currentTranslation.back_translation}
