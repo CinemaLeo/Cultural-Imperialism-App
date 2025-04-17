@@ -1,0 +1,18 @@
+export const phrases = [
+  "You cannot pass all cultures through the same filter.",
+  "One system cannot be expected to present all cultures as they wish, or even as they are.",
+  "Google translate homogenises the self and the other on the assumption that all utterances are interchangeable.",
+  "Oral traditions are alien to computers by design; themselves created within cultures who hold the written word as sacrosanct.",
+  "Is the internet a form of cultural imperialism?",
+  "Not all cultures speak—or wish to speak—the language of contracts and corporations.",
+  "Cultural imperialism is forcing another group to use your system.",
+  "You cannot force inclusion. People and cultures have the right to remain at arms length.",
+  "Not all cultures choose to write. Perhaps some choose to remain ephemeral.",
+  "Helping another begins by understanding their desires, not presenting your current method as their solution.",
+  "Forcing monetary norms and international loans on others is cultural imperialism.",
+  "Technological monopolies enforce cultural imperialism, in communication and the dissemination of information.",
+  "To code for the internet you must write in Maths and English.",
+  "Computational methods, from Facebook to code, force all cultures to fit themselves into a handful of methods developed, largely, by an other.",
+  "Cultural imperialism is a dark spectre of the internet age.",
+  "The tools we use each day serve up imperialism, on a global scale.",
+];

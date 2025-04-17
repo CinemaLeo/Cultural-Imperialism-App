@@ -1,4 +1,3 @@
-// TranslationContext.tsx
 import React, { createContext, useContext, useState } from "react";
 
 type Translation = {
@@ -12,6 +11,8 @@ type Translation = {
 type TranslationContextType = {
   translations: Translation[];
   addTranslation: (newEntry: Translation) => void;
+  is_translating: boolean;
+  setIsTranslating: (value: boolean) => void;
 };
 
 const TranslationContext = createContext<TranslationContextType | undefined>(
@@ -24,13 +25,16 @@ export const TranslationProvider = ({
   children: React.ReactNode;
 }) => {
   const [translations, setTranslations] = useState<Translation[]>([]);
+  const [is_translating, setIsTranslating] = useState(false);
 
   const addTranslation = (newEntry: Translation) => {
     setTranslations((prev) => [...prev, newEntry]);
   };
 
   return (
-    <TranslationContext.Provider value={{ translations, addTranslation }}>
+    <TranslationContext.Provider
+      value={{ translations, addTranslation, is_translating, setIsTranslating }}
+    >
       {children}
     </TranslationContext.Provider>
   );

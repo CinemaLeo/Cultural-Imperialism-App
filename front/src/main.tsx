@@ -1,18 +1,25 @@
-// main.tsx or index.tsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import "./index.css"; // global styles
-import "./App.css"; // component-specific overrides
+import "./index.css";
+import "./App.css";
 
-import App from "./App.tsx";
-
+import App from "./pages/index.tsx";
+import GridPage from "./pages/gridPage.tsx";
+import SideBySidePage from "./pages/side-by-sidePage.tsx";
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/grid" element={<GridPage />} />
+          <Route path="/side-by-side" element={<SideBySidePage />} />
+        </Routes>
+      </BrowserRouter>
     </StrictMode>
   );
 } else {

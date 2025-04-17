@@ -1,8 +1,16 @@
-import { useState, useEffect, useRef } from "react";
-import { useTranslationContext } from "./translationContext";
+import { useState, useEffect, useRef, use } from "react";
+import { useTranslationContext } from "./BroadcastTranslationContext";
+import { phrases } from "../assets/phrase_bank";
+import { flushSync } from "react-dom";
 
 function TranslationComponent() {
-  const { addTranslation } = useTranslationContext();
+  const {
+    addTranslation,
+    resetTranslations,
+    setIsTranslating,
+    is_translating,
+    autoTranslate,
+  } = useTranslationContext();
 
   const [inputText, setInputText] = useState(""); // To store user input
   const [outputLanguage, setOutputLanguage] = useState(""); // To store translated output
@@ -10,6 +18,10 @@ function TranslationComponent() {
   const [backTranslation, setBackTranslation] = useState(""); // To store translated output
   const [loading, setLoading] = useState(false); // To track loading state
   const [error, setError] = useState<string | null>(null);
+
+  ////////////////////////////////////////////////////////////////////
+  // WEB SOCKET AND PASSING PACKETS
+  ////////////////////////////////////////////////////////////////////
 
   // WebSocket specific states
   const [clientId, setClientId] = useState("");
@@ -99,13 +111,18 @@ function TranslationComponent() {
 
         case "complete":
           setLoading(false);
+          // setIsTranslating(false);
           setStatus("Translation completed");
           setCurrentProgress("");
+          setInputText("");
           break;
 
         case "error":
+          console.log("WebSocket error:", data.message);
           setError(data.message);
           setLoading(false);
+          setIsTranslating(false);
+          setInputText("");
           break;
 
         default:
@@ -124,6 +141,7 @@ function TranslationComponent() {
       setStatus("Connection error");
       setError("WebSocket connection error. Please try again.");
       setLoading(false);
+      setInputText("");
     };
 
     socketRef.current = socket;
@@ -137,8 +155,10 @@ function TranslationComponent() {
   };
 
   // Function to handle translation via WebSocket
-  const handleTranslate = () => {
-    if (!inputText.trim()) {
+  const handleTranslate = (customText?: string) => {
+    const textToTranslate = customText || inputText;
+    console.log("Translating:", inputText);
+    if (!textToTranslate.trim()) {
       setError("Please enter text to translate");
       return;
     }
@@ -152,8 +172,10 @@ function TranslationComponent() {
 
     // Reset states
     setLoading(true);
+    setIsTranslating(true);
     setError(null);
     setTranslations([]);
+    resetTranslations();
     setDetectedLanguage(null);
     setCurrentProgress("");
     setOutputLanguage("");
@@ -164,57 +186,112 @@ function TranslationComponent() {
     try {
       socketRef.current.send(
         JSON.stringify({
-          text: inputText,
+          text: textToTranslate,
         })
       );
     } catch (err) {
       setError("Failed to send message. Connection might be closed.");
       setLoading(false);
+      setIsTranslating(false);
 
       // Try to reconnect
       connectWebSocket(clientId);
     }
   };
 
-  // Fallback to REST API if WebSocket fails
-  const handleTranslateREST = async () => {
-    setLoading(true);
-    setError(null); // Reset previous error
+  ////////////////////////////////////////////////////////////////////
+  // AUTO TEXT
+  ////////////////////////////////////////////////////////////////////
+  const auto_submit_delay = 1000; // Delay before auto-submit
+  const isTypingRef = useRef(false);
+  const finalTranslateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const delay_before_sending = 2000; // Delay before sending the text
 
-    try {
-      const response = await fetch("http://localhost:8000/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputText }), // Send the input text
-      });
+  useEffect(() => {
+    if (autoTranslate && !is_translating && !isTypingRef.current) {
+      const timer = setTimeout(() => {
+        const randomPhrase =
+          phrases[Math.floor(Math.random() * phrases.length)];
+        typeInInput(randomPhrase, 40);
+      }, auto_submit_delay);
 
-      // Check if the response is okay (status code 200)
-      if (!response.ok) {
-        throw new Error("Translation failed. Please try again.");
-      }
-
-      const data = await response.json();
-      setOutputLanguage(data.output_language);
-      setOutputTranslation(data.output_translation);
-      setBackTranslation(data.back_translation);
-    } catch (err: unknown) {
-      // Type assertion to make sure 'err' is an instance of Error
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
-    } finally {
-      setLoading(false);
+      return () => clearTimeout(timer);
     }
+  }, [autoTranslate, inputText, is_translating]);
+
+  // Helper to pause X milliseconds during typing
+  const wait = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+  // New, simplified type‑in function
+  const typeInInput = async (text: string, charDelay: number) => {
+    isTypingRef.current = true;
+    setInputText(""); // clear out old
+
+    // Cancel any previous translate timeout
+    if (finalTranslateTimerRef.current) {
+      clearTimeout(finalTranslateTimerRef.current);
+    }
+
+    for (const char of text) {
+      setInputText((prev) => prev + char);
+      await wait(charDelay);
+    }
+    isTypingRef.current = false;
+
+    finalTranslateTimerRef.current = setTimeout(() => {
+      console.log("Sending auto-text", text);
+      handleTranslate(text);
+    }, delay_before_sending); // 300ms gives React time to finish all state updates
   };
+
+  ////////////////////////////////////////////////////////////////////
+  // TEXT INPUT
+  ////////////////////////////////////////////////////////////////////
+
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [shouldRenderInput, setShouldRenderInput] = useState(!is_translating);
+
+  // Update render status when is_translating changes
+  useEffect(() => {
+    if (!is_translating) {
+      const timer = setTimeout(() => setShouldRenderInput(true), 6000); // Set fade_in_delay on  to input.
+      return () => clearTimeout(timer);
+    } else {
+      // Remove from DOM after fade transition completes
+      const timer = setTimeout(() => setShouldRenderInput(false), 3000); // Set fade_out_delay for transitioning from input.
+      return () => clearTimeout(timer);
+    }
+  }, [is_translating]);
+
+  // Focus the text input field
+  useEffect(() => {
+    const focusInterval = setInterval(() => {
+      if (!shouldRenderInput)
+        if (
+          inputRef.current &&
+          document.activeElement !== inputRef.current &&
+          document.hasFocus()
+        ) {
+          inputRef.current.focus();
+        }
+    }, 1000); // Check every second
+    return () => clearInterval(focusInterval); // Cleanup on unmount
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => 2000); // Set delay for fade out, make less than translation.tsx's fade_in_delay
+    return () => clearTimeout(timer);
+  }, [inputText]);
 
   return (
     <div>
       {/* Connection status indicator */}
       <div
         style={{
-          alignItems: "left",
+          position: "absolute",
+          top: "10px",
+          left: "10px",
           marginBottom: "10px",
           fontSize: "0.8rem",
           color: connected ? "green" : "red",
@@ -222,65 +299,56 @@ function TranslationComponent() {
       >
         ⬤
       </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "90vh",
-        }}
-      >
-        <textarea
-          autoFocus
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)} // TODO If not conncted, try to connect.
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault(); // Prevents newline
-              handleTranslate(); // Trigger your function
-            }
-          }}
-          placeholder=""
-          maxLength={150}
+      {shouldRenderInput && (
+        <div
           style={{
-            width: "100%",
-            minHeight: "50vh",
-            padding: "8px",
-            marginBottom: "10px",
-            outline: "none",
-            resize: "none",
+            display: "flex",
+            alignItems: "center",
 
-            backgroundColor: "rgba(255, 255, 255, 0)",
-            border: "0px",
+            justifyContent: "center",
+            height: "100vh",
 
-            textAlign: "center",
-            fontFamily: "'Noto', sans-serif",
-            fontSize: "3em",
-            caretColor: "yellow",
-            textShadow: "10px 10 black",
+            opacity: !is_translating ? 1 : 0,
+            transition: "opacity 3s ease",
+            pointerEvents: !is_translating ? "auto" : "none",
           }}
-        />
-        {inputText.length > 2 && (
-          <div
-            style={{
-              display: "absolute",
-              position: "absolute",
-              top: "60vh",
-              alignContent: "center",
-              fontFamily: "'Noto', sans-serif",
-              fontSize: "3em",
-              color: "rgba(255, 255, 255, 0.25)",
+        >
+          <textarea
+            autoFocus
+            ref={inputRef}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)} // TODO If not conncted, try to connect.
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault(); // Prevents newline
+                handleTranslate(); // Trigger your function
+              }
             }}
-          >
-            ⏎
-          </div>
-        )}
-      </div>
+            placeholder=""
+            maxLength={150}
+            style={styles.userinput}
+          />
+          {inputText.length > 2 && (
+            <div
+              style={{
+                display: "absolute",
+                position: "absolute",
+                top: "75vh",
+                alignContent: "center",
+                fontFamily: "'Noto', sans-serif",
+                fontSize: "3em",
+                color: "rgba(255, 255, 255, 0.25)",
+              }}
+            >
+              ⏎
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Error message */}
       {error && <p style={{ color: "red" }}>{error}</p>}
-
-      {/* Translation progress 
+      {/* DEBUG TRANS PROCESS 
       {currentProgress && (
         <div
           style={{
@@ -293,7 +361,6 @@ function TranslationComponent() {
           <p>{currentProgress}</p>
         </div>
       )} */}
-
       {/* Detected language 
       {detectedLanguage && (
         <div style={{ margin: "10px 0" }}>
@@ -302,12 +369,10 @@ function TranslationComponent() {
           </p>
         </div>
       )}*/}
-
       {/* Translation results 
       {outputLanguage && <p>Final Language: {outputLanguage}</p>}
       {outputTranslation && <p>Output Translation: {outputTranslation}</p>}
       {backTranslation && <p>Back Translate: {backTranslation}</p>}*/}
-
       {/* All translations (optional) */}
       {/*
       {translations.length > 0 && (
@@ -346,3 +411,23 @@ function TranslationComponent() {
 }
 
 export default TranslationComponent;
+
+const styles = {
+  userinput: {
+    width: "80vw",
+    minHeight: "40vh",
+    padding: "8px",
+    marginBottom: "0px",
+    outline: "none" as const,
+    resize: "none" as const,
+
+    backgroundColor: "rgba(255, 255, 255, 0)",
+    border: "0px",
+
+    textAlign: "center" as const,
+    fontFamily: "'Noto', sans-serif",
+    fontSize: "3em",
+    caretColor: "white",
+    textShadow: "10px 10 black",
+  },
+};

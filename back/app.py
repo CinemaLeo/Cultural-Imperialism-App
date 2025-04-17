@@ -11,7 +11,6 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-
 # Connection Manager to handle WebSocket connections
 class ConnectionManager:
     def __init__(self):
@@ -29,6 +28,7 @@ class ConnectionManager:
     
     async def send_message(self, client_id: str, message: dict):
         if client_id in self.active_connections:
+            print(f"Sending to client {client_id}: {message}")
             await self.active_connections[client_id].send_json(message)
     
     async def broadcast(self, message: dict):
@@ -41,7 +41,7 @@ app = FastAPI()
 translator = Translator()
 manager = ConnectionManager()
 BLACKLISTED_LANGUAGES = ["la", "zh", "iw", "jw", "tl", "ndc-zw"]
-maximum_translations = 56 - 1  # 56, including the original language
+maximum_translations = 10 - 1  # 56, including the original language
 recurrant_failures = 0
 failure_threshold = 5
 
@@ -66,13 +66,12 @@ def get_randomised_language_list():
 async def detect_language(text):
     success = False
     detected_language = None
-    print("TEXT =", text)
+    print("TEXT =", text, flush=True)
     try:
         detected_language = translator.detect(text)
         print(detected_language.lang, f"{LANGUAGES[detected_language.lang]}, Confidence = ", detected_language.confidence)
-        if detected_language.confidence is not None and detected_language.confidence > 0.9:
+        if detected_language.confidence is not None and detected_language.confidence > 0.75:
             success = True
-        # WebSocket version doesn't need interactive prompting
     except Exception as e:
         print(f"Error detecting language: {e}")
     
@@ -171,9 +170,10 @@ async def process_translation(client_id: str, input_text: str):
     if not success:
         await manager.send_message(client_id, {
             "type": "error",
-            "message": "Could not detect language confidently. Defaulting to English."
+            "message": "Could not detect language confidently. Please try again.",
+            "terminate": True
         })
-        original_language = "en"
+        return
     
  
     await manager.send_message(client_id, {
