@@ -13,7 +13,7 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <HashRouter>
+      <HashRouter basename="/Cultural-Imperialism-App/">
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/grid" element={<GridPage />} />
