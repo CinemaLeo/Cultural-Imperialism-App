@@ -1,4 +1,4 @@
-name: Deploy Frontend to GH Pages
+name: Deploy front to GH Pages
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend # All commands run from /frontend
+        working-directory: front # All commands run from /front
 
     steps:
       - uses: actions/checkout@v4
@@ -29,4 +29,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/dist
+          publish_dir: ./front/dist
