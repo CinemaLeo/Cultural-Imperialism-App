@@ -1,5 +1,6 @@
 {
-  "name": "cultural-imperialism",
+  "name": "cultural-imperialism-app",
+  "homepage": "https://cinemaleo.github.io/Cultural-Imperialism-App",
   "private": true,
   "version": "0.0.0",
   "type": "module",
