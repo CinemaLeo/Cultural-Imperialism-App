@@ -45,7 +45,14 @@ const FullscreenToggle: React.FC = () => {
   }
 
   return (
-    <div style={{ position: "absolute", top: "40px", left: "-11.5px" }}>
+    <div
+      style={{
+        position: "absolute",
+        top: "40px",
+        left: "-11.5px",
+        opacity: 0.6,
+      }}
+    >
       <button onClick={toggleFullscreen}>⛶</button>
     </div>
   );

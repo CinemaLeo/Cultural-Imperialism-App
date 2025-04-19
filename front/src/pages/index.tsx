@@ -9,6 +9,8 @@ import TranslationComponent from "../components/translation.tsx";
 import MainDisplay from "../components/main_display.tsx";
 import FullscreenToggle from "../components/FullscreenToggle.tsx";
 import AutoTranslateToggle from "../components/AutoTranslateToggle.tsx";
+import MobileCheck from "../components/MobileView.tsx";
+import { BrowserView } from "react-device-detect";
 
 export default function App() {
   useEffect(() => {
@@ -37,16 +39,31 @@ export default function App() {
   };
 
   return (
-    <TranslationProvider>
-      <FullscreenToggle />
-      <div style={{ position: "absolute", top: "70px", left: "-11.5px" }}>
-        <button onClick={openAdditionalWindows} style={{ marginTop: "2em" }}>
-          ⮺
-        </button>
-      </div>
-      <AutoTranslateToggle />
-      <TranslationComponent />
-      <MainDisplay />
-    </TranslationProvider>
+    <div>
+      <MobileCheck />
+      <BrowserView>
+        <TranslationProvider>
+          <FullscreenToggle />
+          <div
+            style={{
+              position: "absolute",
+              top: "70px",
+              left: "-11.5px",
+              opacity: 0.6,
+            }}
+          >
+            <button
+              onClick={openAdditionalWindows}
+              style={{ marginTop: "2em" }}
+            >
+              ⮺
+            </button>
+          </div>
+          <AutoTranslateToggle />
+          <TranslationComponent />
+          <MainDisplay />
+        </TranslationProvider>
+      </BrowserView>
+    </div>
   );
 }

@@ -116,4 +116,18 @@
   }
 }
 
+@keyframes fadeOut_then_fadeIn {
+  0% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0;
+  }
+  60%{
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 

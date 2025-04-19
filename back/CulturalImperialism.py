@@ -5,11 +5,14 @@ import time
 import json
 
 from asyncio import to_thread
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+port_number = 8001
+
 
 # Connection Manager to handle WebSocket connections
 class ConnectionManager:
@@ -41,14 +44,14 @@ app = FastAPI()
 translator = Translator()
 manager = ConnectionManager()
 BLACKLISTED_LANGUAGES = ["la", "zh", "iw", "jw", "tl", "ndc-zw"]
-maximum_translations = 10 - 1  # 56, including the original language
+maximum_translations = 36 - 1  # 56, including the original language
 recurrant_failures = 0
 failure_threshold = 5
 
 # API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # or "*" to allow all
+    allow_origins=["http://localhost:5173", "http://cinemaleo.vip"],  # or "*" to allow all
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -62,7 +65,7 @@ def get_randomised_language_list():
     random.shuffle(randomised_language_tuples)  # Shuffle the list of tuples
     return randomised_language_tuples
 
-
+# Detect Language
 async def detect_language(text):
     success = False
     detected_language = None
@@ -122,6 +125,8 @@ def translate_to_original(text, source_language, original_language):
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await manager.connect(websocket, client_id)
+    MAX_LEN = 200
+    MIN_LEN = 2
     try:
         while True:
             # Wait for text to translate from client
@@ -131,6 +136,13 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             try:
                 request_data = json.loads(data)
                 input_text = request_data.get("text", "")
+                print("length", len(input_text))
+                if len(input_text) > MAX_LEN or len(input_text) < MIN_LEN:
+                    await manager.send_message(client_id, {
+                        "type": "error",
+                        "message": "Input text is too long or too short"
+                    })
+                    break
                 
                 # Send acknowledgment
                 await manager.send_message(client_id, {
@@ -356,4 +368,4 @@ async def translate(payload: TextInput):
 # Start the server with uvicorn
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=port_number)

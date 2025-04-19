@@ -5,7 +5,7 @@ import { Container, Row, Col } from "react-bootstrap";
 import { useTranslationContext } from "./BroadcastTranslationContext";
 import Typewriter from "typewriter-effect";
 
-const NUMBER_OF_TRANSLATIONS = 56;
+const NUMBER_OF_TRANSLATIONS = 36;
 
 type CellData = {
   index: number | null;
@@ -56,7 +56,7 @@ const Grid = () => {
 
   return (
     <Container fluid>
-      <Row xs={1} sm={2} md={4} xl={7} xxl={8}>
+      <Row xs={1} sm={2} md={4} l={6} xxl={9}>
         {cells.map((cell, i) => (
           <Col key={`${cell.output_translation}-${i}`} className="mb-4 px-3">
             <div

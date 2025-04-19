@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslationContext } from "./BroadcastTranslationContext";
 import { phrases } from "../assets/phrase_bank";
-import { flushSync } from "react-dom";
 
 function TranslationComponent() {
   const {
@@ -54,7 +53,9 @@ function TranslationComponent() {
     }
 
     // Create WebSocket connection
-    const socket = new WebSocket(`ws://localhost:8000/ws/${id}`);
+    const socket = new WebSocket(
+      `wss://cinemaleo.vip/CulturalImperialism/ws/${id}`
+    ); //LOCAL `ws://localhost:8000/ws/${id}`
 
     socket.onopen = () => {
       console.log("WebSocket connected");
@@ -157,11 +158,16 @@ function TranslationComponent() {
   // Function to handle translation via WebSocket
   const handleTranslate = (customText?: string) => {
     const textToTranslate = customText || inputText;
-    console.log("Translating:", inputText);
+
     if (!textToTranslate.trim()) {
       setError("Please enter text to translate");
       return;
+    } else if (textToTranslate.length < 2) {
+      setError("Text too short. Please enter at least 2 characters.");
+      return;
     }
+
+    console.log("Translating:", inputText);
 
     if (!connected || !socketRef.current) {
       // Try to reconnect
@@ -202,10 +208,11 @@ function TranslationComponent() {
   ////////////////////////////////////////////////////////////////////
   // AUTO TEXT
   ////////////////////////////////////////////////////////////////////
-  const auto_submit_delay = 1000; // Delay before auto-submit
+  const auto_submit_delay = 10000; // Delay before auto-submit
   const isTypingRef = useRef(false);
   const finalTranslateTimerRef = useRef<NodeJS.Timeout | null>(null);
   const delay_before_sending = 2000; // Delay before sending the text
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   useEffect(() => {
     if (autoTranslate && !is_translating && !isTypingRef.current) {
@@ -214,6 +221,25 @@ function TranslationComponent() {
           phrases[Math.floor(Math.random() * phrases.length)];
         typeInInput(randomPhrase, 40);
       }, auto_submit_delay);
+
+      // 2️⃣ Initialize the countdown in seconds
+      setCountdown(Math.ceil(auto_submit_delay / 1000));
+
+      // 3️⃣ Tick that countdown every second
+      const interval = setInterval(() => {
+        setCountdown((c) => {
+          if (c !== null && c > 0) return c - 1;
+          clearInterval(interval);
+          return null;
+        });
+      }, 1000);
+
+      // Cleanup both timers if anything changes
+      return () => {
+        clearTimeout(timer);
+        clearInterval(interval);
+        setCountdown(null);
+      };
 
       return () => clearTimeout(timer);
     }
@@ -295,10 +321,27 @@ function TranslationComponent() {
           marginBottom: "10px",
           fontSize: "0.8rem",
           color: connected ? "green" : "red",
+          opacity: 0.6,
         }}
       >
         ⬤
       </div>
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          left: 130,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        {autoTranslate && countdown != null && (
+          <span style={{ marginLeft: 8, fontSize: "0.8rem", opacity: 0.6 }}>
+            ⏳ {countdown}
+          </span>
+        )}
+      </div>
+
       {shouldRenderInput && (
         <div
           style={{
@@ -426,6 +469,7 @@ const styles = {
 
     textAlign: "center" as const,
     fontFamily: "'Noto', sans-serif",
+    color: "#dfdfdf",
     fontSize: "3em",
     caretColor: "white",
     textShadow: "10px 10 black",
