@@ -109,10 +109,10 @@
 
 @keyframes fadeShadow {
   0%{
-    textShadow: 5px 5px 5px rgba(0, 0, 0, 0.8);
+    text-shadow: 5px 5px 5px rgba(0, 0, 0, 0.8);
   }
   100%{
-    textShadow: 5px 5px 5px rgba(0, 0, 0, 0);
+    text-shadow: 5px 5px 5px rgba(0, 0, 0, 0);
   }
 }
 
